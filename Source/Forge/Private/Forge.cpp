@@ -23,6 +23,7 @@ DEFINE_LOG_CATEGORY(LogForge);
 TMap<FString, FFunction> GForgeNameToFunction;
 FString GForgeCmd;
 FString GForgeArgs;
+FString GForgeGitHubUrl;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -655,6 +656,39 @@ FString GetServerToken()
 	return ServerToken;
 }
 
+bool TryGetPullRequestInfo(
+	FString& OutName,
+	FString& OutUrl)
+{
+	const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref");
+	if (!GitHubRef)
+	{
+		return false;
+	}
+
+	FString PullRequestId = *GitHubRef;
+	if (!PullRequestId.RemoveFromStart("refs/pull/") ||
+		!PullRequestId.RemoveFromStart("/merge"))
+	{
+		return false;
+	}
+
+	const int32 Index = GForgeGitHubUrl.Find("/actions/runs/");
+	check(Index != -1);
+
+	const FString RepoUrl = GForgeGitHubUrl.Left(Index);
+	const FString ApiUrl = RepoUrl.Replace(TEXT("https://github.com/"), TEXT("https://api.github.com/"));
+
+#if 0 // TODO Missing token
+	Http_Get(ApiUrl / "pulls" + GitHubRef)
+	.Header("Content-type", "application/json")
+#endif
+
+	OutName = "Pull Request";
+	OutUrl = RepoUrl / "pull" / PullRequestId;
+	return true;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -835,6 +869,97 @@ FString RunUAT(
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+FHttpGet::~FHttpGet()
+{
+	LOG("GET %s", *Url);
+
+	if (!Headers.IsEmpty())
+	{
+		LOG("\tHeaders:");
+
+		for (const auto& It : Headers)
+		{
+			LOG("\t\t%s: %s", *It.Key, *It.Value);
+		}
+	}
+
+	if (!QueryParameters.IsEmpty())
+	{
+		LOG("\tQuery parameters:");
+
+		for (const auto& It : QueryParameters)
+		{
+			LOG("\t\t%s: %s", *It.Key, *It.Value);
+		}
+	}
+
+	const TSharedRef<IHttpRequest> Request = FHttpModule::Get().CreateRequest();
+	Request->SetVerb("GET");
+
+	for (const auto& It : Headers)
+	{
+		Request->SetHeader(It.Key, It.Value);
+	}
+
+	FString FinalUrl = Url;
+	if (QueryParameters.Num() > 0)
+	{
+		FinalUrl += "?";
+
+		for (const auto& It : QueryParameters)
+		{
+			if (!FinalUrl.EndsWith("?"))
+			{
+				FinalUrl += "&";
+			}
+
+			if (It.Key != FPlatformHttp::UrlEncode(It.Key))
+			{
+				LOG_FATAL("Invalid query parameter key: %s", *It.Key);
+			}
+
+			FinalUrl += It.Key + "=" + FPlatformHttp::UrlEncode(It.Value);
+		}
+	}
+
+	Request->SetURL(FinalUrl);
+
+	Request->ProcessRequest();
+
+	while (Request->GetStatus() == EHttpRequestStatus::Processing)
+	{
+		FHttpModule::Get().GetHttpManager().Tick(0.f);
+	}
+
+	const TSharedPtr<IHttpResponse> Response = Request->GetResponse();
+	if (!Response)
+	{
+		LOG_FATAL("GET failed: Failed to connect");
+	}
+
+	if (Response->GetResponseCode() != 200)
+	{
+		LOG_FATAL("GET failed: %d\n%s",
+			Response->GetResponseCode(),
+			*Response->GetContentAsString());
+	}
+
+	check(Request->GetStatus() == EHttpRequestStatus::Succeeded);
+
+	LOG("RESPONSE: %d\n%s",
+		Response->GetResponseCode(),
+		*Response->GetContentAsString());
+}
+
+FHttpGet Http_Get(const FString& Url)
+{
+	return FHttpGet(Url);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 FHttpPost::~FHttpPost()
 {
 	LOG("POST %s", *Url);
@@ -981,16 +1106,17 @@ void PostFatalSlackMessage(
 {
 	FString NewMessage = "*" + GForgeCmd + " failed*\n";
 
-	if (const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref"))
+	FString PullRequestName;
+	FString PullRequestUrl;
+	if (TryGetPullRequestInfo(PullRequestName, PullRequestUrl))
 	{
-		NewMessage += "PR: " + GitHubRef->Replace(TEXT("refs/"), TEXT("https://github.com/VoxelPluginDev/VoxelPlugin/")) + "\n\n";
+		NewMessage += "PR: " + PullRequestName + " " + PullRequestUrl + "\n\n";
 	}
 
 	NewMessage += Message;
 
 	PostSlackMessage(NewMessage, Attachments);
 
-	UE_LOG(LogForge, Error, TEXT("PostFatalSlackMessage"));
 	UE_LOG(LogForge, Fatal, TEXT("%s"), *Message);
 }
 
@@ -1780,6 +1906,13 @@ int32 UForgeCommandlet::Main(const FString& Params)
 		GLog->RemoveOutputDevice(OutputDevice);
 	};
 
+	GForgeGitHubUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("GITHUB_URL"));
+
+	if (GForgeGitHubUrl.IsEmpty())
+	{
+		LOG_FATAL("Missing GITHUB_URL");
+	}
+
 	GForgeSlackBuildOpsUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("SLACK_BUILD_OPS_URL"));
 
 	if (GForgeSlackBuildOpsUrl.IsEmpty())
@@ -1925,15 +2058,7 @@ void Internal_LogFatal(const FString& Line)
 
 	if (!GForgeIsSendingSlackMessage)
 	{
-		FString Message = "*" + GForgeCmd + " failed*\n";
-
-		if (const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref"))
-		{
-			Message += "\nPR: " + GitHubRef->Replace(TEXT("refs/"), TEXT("https://github.com/VoxelPluginDev/VoxelPlugin/"));
-		}
-
-		Message += Line;
-		PostSlackMessage(Message);
+		PostFatalSlackMessage(Line);
 	}
 
 	UE_LOG(LogForge, Fatal, TEXT("%s"), *Line);

@@ -157,7 +157,7 @@ if exit_code != 0:
         ]
     }
 
-    if "PostFatalSlackMessage" not in log:
+    if "PostFatalSlackMessage" not in "".join(lines):
         response = requests.request(
             "POST",
             SLACK_BUILD_OPS_URL,
@@ -165,7 +165,7 @@ if exit_code != 0:
             data=json.dumps(payload)).text
 
         print(response)
-        
+
     exit(1)
 
 print("Command successful")
