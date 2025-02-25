@@ -477,6 +477,51 @@ FString Exec(
 	return Output;
 }
 
+FString Exec_PostErrors(
+	const FString& CommandLine,
+	const TSet<int32>& ValidExitCodes)
+{
+	FString Output;
+	if (ExecImpl(CommandLine, true, Output, ValidExitCodes))
+	{
+		return Output;
+	}
+
+	TArray<FString> Lines;
+	Output.ParseIntoArrayLines(Lines);
+
+	Lines.RemoveAll([](const FString& Line)
+	{
+		if (Line.Contains("0 Warning(s)") ||
+			Line.Contains("0 Error(s)"))
+		{
+			return true;
+		}
+
+		return
+			!Line.Contains("error") &&
+			!Line.Contains("warning") &&
+			!Line.StartsWith("D:\\Perforce\\");
+	});
+
+	for (const FString& Line : Lines)
+	{
+		LOG("::error::%s", *Line);
+	}
+
+	Lines.SetNum(FMath::Min(Lines.Num(), 25));
+
+	FString Message = "```\n";
+	for (const FString& Line : Lines)
+	{
+		Message += Line + "\n";
+	}
+	Message += "```";
+
+	PostFatalSlackMessage(Message);
+	return {};
+}
+
 bool TryExec(
 	const FString& CommandLine,
 	const TSet<int32>& ValidExitCodes)
@@ -780,7 +825,7 @@ FString RunUAT(
 	const EEngineType EngineType,
 	const FString& Command)
 {
-	return Exec(FString::Printf(
+	return Exec_PostErrors(FString::Printf(
 		TEXT("\"%s\" %s"),
 		*GetRunUATPath(UnrealVersion, EngineType),
 		*Command));
@@ -928,6 +973,25 @@ void PostSlackMessage(
 	Http_Post(GForgeSlackBuildOpsUrl)
 	.Header("Content-type", "application/json")
 	.Content(JsonToString(Json, true));
+}
+
+void PostFatalSlackMessage(
+	const FString& Message,
+	const TArray<FSlackAttachment>& Attachments)
+{
+	FString NewMessage = "*" + GForgeCmd + " failed*\n";
+
+	if (const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref"))
+	{
+		NewMessage += "PR: " + GitHubRef->Replace(TEXT("refs/"), TEXT("https://github.com/VoxelPluginDev/VoxelPlugin/")) + "\n\n";
+	}
+
+	NewMessage += Message;
+
+	PostSlackMessage(NewMessage, Attachments);
+
+	UE_LOG(LogForge, Error, TEXT("PostFatalSlackMessage"));
+	UE_LOG(LogForge, Fatal, TEXT("%s"), *Message);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1867,7 +1931,7 @@ void Internal_LogFatal(const FString& Line)
 		{
 			Message += "\nPR: " + GitHubRef->Replace(TEXT("refs/"), TEXT("https://github.com/VoxelPluginDev/VoxelPlugin/"));
 		}
-		
+
 		Message += Line;
 		PostSlackMessage(Message);
 	}

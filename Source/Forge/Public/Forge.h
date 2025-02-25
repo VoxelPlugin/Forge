@@ -99,6 +99,10 @@ FORGE_API FString Exec(
 	const FString& CommandLine,
 	const TSet<int32>& ValidExitCodes = { 0 });
 
+FORGE_API FString Exec_PostErrors(
+	const FString& CommandLine,
+	const TSet<int32>& ValidExitCodes = { 0 });
+
 FORGE_API bool TryExec(
 	const FString& CommandLine,
 	const TSet<int32>& ValidExitCodes = { 0 });
@@ -218,6 +222,10 @@ struct FSlackAttachment
 	FString ImageUrl;
 };
 FORGE_API void PostSlackMessage(
+	const FString& Message,
+	const TArray<FSlackAttachment>& Attachments = {});
+
+FORGE_API void PostFatalSlackMessage(
 	const FString& Message,
 	const TArray<FSlackAttachment>& Attachments = {});
 

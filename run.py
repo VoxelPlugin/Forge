@@ -157,13 +157,15 @@ if exit_code != 0:
         ]
     }
 
-    response = requests.request(
-        "POST",
-        SLACK_BUILD_OPS_URL,
-        headers={'Content-type': 'application/json'},
-        data=json.dumps(payload)).text
+    if "PostFatalSlackMessage" not in log:
+        response = requests.request(
+            "POST",
+            SLACK_BUILD_OPS_URL,
+            headers={'Content-type': 'application/json'},
+            data=json.dumps(payload)).text
 
-    print(response)
+        print(response)
+        
     exit(1)
 
 print("Command successful")
