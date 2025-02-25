@@ -509,7 +509,7 @@ FString Exec_PostErrors(
 		LOG("::error::%s", *Line);
 	}
 
-	Lines.SetNum(FMath::Min(Lines.Num(), 25));
+	Lines.SetNum(FMath::Min(Lines.Num(), 10));
 
 	FString Message = "```\n";
 	for (const FString& Line : Lines)
