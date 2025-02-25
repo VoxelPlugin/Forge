@@ -1862,6 +1862,12 @@ void Internal_LogFatal(const FString& Line)
 	if (!GForgeIsSendingSlackMessage)
 	{
 		FString Message = "*" + GForgeCmd + " failed*\n";
+
+		if (const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref"))
+		{
+			Message += "\nPR: " + GitHubRef->Replace(TEXT("refs/"), TEXT("https://github.com/VoxelPluginDev/VoxelPlugin/"));
+		}
+		
 		Message += Line;
 		PostSlackMessage(Message);
 	}
