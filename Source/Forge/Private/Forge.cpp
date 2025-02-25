@@ -668,7 +668,7 @@ bool TryGetPullRequestInfo(
 
 	FString PullRequestId = *GitHubRef;
 	if (!PullRequestId.RemoveFromStart("refs/pull/") ||
-		!PullRequestId.RemoveFromStart("/merge"))
+		!PullRequestId.RemoveFromEnd("/merge"))
 	{
 		return false;
 	}
@@ -1110,9 +1110,10 @@ void PostFatalSlackMessage(
 	FString PullRequestUrl;
 	if (TryGetPullRequestInfo(PullRequestName, PullRequestUrl))
 	{
-		NewMessage += "PR: " + PullRequestName + " " + PullRequestUrl + "\n\n";
+		NewMessage += "PR: " + PullRequestName + " " + PullRequestUrl + "\n";
 	}
 
+	NewMessage += GForgeGitHubUrl + "\n";
 	NewMessage += Message;
 
 	PostSlackMessage(NewMessage, Attachments);
