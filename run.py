@@ -57,16 +57,17 @@ if not os.path.exists(engine_path):
 
 print("Engine Path: " + engine_path)
 
-print("Killing zombie processes")
+if "-DoNotKillZombies" not in forge_args:
+    print("Killing zombie processes")
 
-if os.name == "posix":
-    subprocess.run('killall UnrealEditor', shell=True)
-    subprocess.run('killall UnrealEditor-Cmd', shell=True)
-    subprocess.run('killall dotnet', shell=True)
-else:
-    subprocess.run('wmic process where "name=\'UnrealEditor.exe\'" delete')
-    subprocess.run('wmic process where "name=\'UnrealEditor-Cmd.exe\'" delete')
-    subprocess.run('wmic process where "name=\'dotnet.exe\'" delete')
+    if os.name == "posix":
+        subprocess.run('killall UnrealEditor', shell=True)
+        subprocess.run('killall UnrealEditor-Cmd', shell=True)
+        subprocess.run('killall dotnet', shell=True)
+    else:
+        subprocess.run('wmic process where "name=\'UnrealEditor.exe\'" delete')
+        subprocess.run('wmic process where "name=\'UnrealEditor-Cmd.exe\'" delete')
+        subprocess.run('wmic process where "name=\'dotnet.exe\'" delete')
 
 print("::group::Building project")
 
