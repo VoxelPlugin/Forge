@@ -494,7 +494,11 @@ FString Exec_PostErrors(
 	Lines.RemoveAll([](const FString& Line)
 	{
 		if (Line.Contains("0 Warning(s)") ||
-			Line.Contains("0 Error(s)"))
+			Line.Contains("0 Error(s)") ||
+			Line.Contains("Failed to create pipeline state with combined hash") ||
+			Line.Contains("Failed to create compute PSO with combined hash") ||
+			Line.Contains("Failed to create compute pipeline with hash") ||
+			Line.Contains("LogRHI: Error: Shader:"))
 		{
 			return true;
 		}
