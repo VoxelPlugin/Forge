@@ -31,6 +31,7 @@ struct FForgeLambdaCaller
 
 extern FORGE_API int32 GForgeBlockIndex;
 
+FORGE_API FString EscapeTeamCity(FString Text);
 FORGE_API void Internal_Log(FString Line);
 FORGE_API void Internal_LogFatal(const FString& Line);
 FORGE_API void Internal_LogSummary(const FString& Line);
@@ -40,7 +41,7 @@ FORGE_API void Internal_LogSummary(const FString& Line);
 
 #define LOG_SCOPE(Text, ...) \
 	const int32 BlockIndex_ ## __LINE__ = GForgeBlockIndex++; \
-	LOG("##teamcity[blockOpened name='block_%d' description='" Text "']" Text, BlockIndex_ ## __LINE__, ##__VA_ARGS__); \
+	LOG("##teamcity[blockOpened name='block_%d' description='%s']", BlockIndex_ ## __LINE__, *EscapeTeamCity(FString::Printf(TEXT(Text), ##__VA_ARGS__))); \
 	ON_SCOPE_EXIT \
 	{ \
 		LOG("##teamcity[blockClosed name='block_%d']", BlockIndex_ ## __LINE__); \

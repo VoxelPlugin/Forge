@@ -327,8 +327,6 @@ bool ExecImpl(
 
 	LOG_SCOPE("%s", *CommandLine);
 
-	const double StartTime = FPlatformTime::Seconds();
-
 	void* PipeRead = nullptr;
 	void* PipeWrite = nullptr;
 	check(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
@@ -436,20 +434,6 @@ bool ExecImpl(
 
 	FPlatformProcess::ClosePipe(PipeRead, PipeWrite);
 
-	const double EndTime = FPlatformTime::Seconds();
-
-	if (EndTime - StartTime > 10)
-	{
-		FString PrettyCommandLine = CommandLine;
-		CommandLine.Split(TEXT(" "), &PrettyCommandLine, nullptr);
-
-		PrettyCommandLine.RemoveFromStart("\"");
-		PrettyCommandLine.RemoveFromEnd("\"");
-		PrettyCommandLine = FPaths::GetBaseFilename(PrettyCommandLine);
-
-		LOG("%s took %s", *PrettyCommandLine, *SecondsToString(EndTime - StartTime));
-	}
-
 	if (!ValidExitCodes.Contains(ReturnCode))
 	{
 		if (bAllowFailure)
@@ -516,7 +500,7 @@ FString Exec_PostErrors(
 
 	for (const FString& Line : Lines)
 	{
-		LOG("##teamcity[message text='%s' status='ERROR']", *Line.Replace(TEXT("'"), TEXT("|'")));
+		LOG("##teamcity[message text='%s' status='ERROR']", *EscapeTeamCity(Line));
 	}
 
 	Lines.SetNum(FMath::Min(Lines.Num(), 10));
@@ -1850,14 +1834,14 @@ int32 UForgeCommandlet::Main(const FString& Params)
 
 			if (Verbosity == ELogVerbosity::Warning)
 			{
-				LOG("##teamcity[message text='%s %s' status='WARNING']", *Category.ToString(), *FString(Data).Replace(TEXT("'"), TEXT("|'")));
+				LOG("##teamcity[message text='%s %s' status='WARNING']", *Category.ToString(), *EscapeTeamCity(Data));
 
 				FScopeLock Lock(&CriticalSection);
 				Warnings.Add(FString::Printf(TEXT("%s: %s"), *Category.ToString(), Data));
 			}
 			else if (Verbosity == ELogVerbosity::Error)
 			{
-				LOG("##teamcity[message text='%s %s' status='ERROR']", *Category.ToString(), *FString(Data).Replace(TEXT("'"), TEXT("|'")));
+				LOG("##teamcity[message text='%s %s' status='ERROR']", *Category.ToString(), *EscapeTeamCity(Data));
 
 				FScopeLock Lock(&CriticalSection);
 				Errors.Add(FString::Printf(TEXT("%s: %s"), *Category.ToString(), Data));
@@ -1950,6 +1934,22 @@ int32 UForgeCommandlet::Main(const FString& Params)
 
 int32 GForgeBlockIndex = 0;
 
+FString EscapeTeamCity(FString Text)
+{
+	if (Text.StartsWith("##teamcity"))
+	{
+		return Text;
+	}
+
+	Text.ReplaceInline(TEXT("|"), TEXT("||"));
+	Text.ReplaceInline(TEXT("["), TEXT("|["));
+	Text.ReplaceInline(TEXT("]"), TEXT("|]"));
+	Text.ReplaceInline(TEXT("\n"), TEXT("|n"));
+	Text.ReplaceInline(TEXT("\r"), TEXT("|r"));
+	Text.ReplaceInline(TEXT("'"), TEXT("|'"));
+	return Text;
+}
+
 void Internal_Log(FString Line)
 {
 	if (!Line.Contains("LogForge"))
@@ -1957,8 +1957,7 @@ void Internal_Log(FString Line)
 		UE_LOG(LogForge, Display, TEXT("%s"), *Line);
 	}
 
-	Line.ReplaceInline(TEXT("\n"), TEXT("|n"));
-	Line.ReplaceInline(TEXT("\r"), TEXT("|r"));
+	Line = EscapeTeamCity(Line);
 
 	const FTCHARToUTF8 UnicodeString(*Line, Line.Len());
 
