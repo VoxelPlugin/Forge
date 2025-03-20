@@ -10,9 +10,6 @@ import subprocess
 
 sys.stdout.reconfigure(encoding='utf-8')
 
-GITHUB_URL = os.environ["GITHUB_URL"]
-SLACK_BUILD_OPS_URL = os.environ["SLACK_BUILD_OPS_URL"]
-
 if len(sys.argv) < 3:
     print('Invalid usage: should be run.py "Path/To/Project.uproject" MyCommand -Cmd1 -Cmd2')
     exit(1)
@@ -145,28 +142,6 @@ print(f"Exit code: {exit_code}")
 
 if exit_code != 0:
     print("::error::Command failed")
-
-    payload = {
-        "blocks": [
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": f"*<{GITHUB_URL}|{forge_cmd}>* failed"
-                }
-            }
-        ]
-    }
-
-    if "PostFatalSlackMessage" not in "".join(lines):
-        response = requests.request(
-            "POST",
-            SLACK_BUILD_OPS_URL,
-            headers={'Content-type': 'application/json'},
-            data=json.dumps(payload)).text
-
-        print(response)
-
     exit(1)
 
 print("Command successful")

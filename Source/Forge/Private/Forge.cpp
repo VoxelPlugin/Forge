@@ -23,7 +23,6 @@ DEFINE_LOG_CATEGORY(LogForge);
 TMap<FString, FFunction> GForgeNameToFunction;
 FString GForgeCmd;
 FString GForgeArgs;
-FString GForgeGitHubUrl;
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -482,8 +481,14 @@ FString Exec_PostErrors(
 	const FString& CommandLine,
 	const TSet<int32>& ValidExitCodes)
 {
+	LOG("##teamcity[compilationStarted compiler='Unreal']");
+
 	FString Output;
-	if (ExecImpl(CommandLine, true, Output, ValidExitCodes))
+	const bool bSuccess = ExecImpl(CommandLine, true, Output, ValidExitCodes);
+
+	LOG("##teamcity[compilationFinished compiler='Unreal']");
+
+	if (bSuccess)
 	{
 		return Output;
 	}
@@ -511,7 +516,7 @@ FString Exec_PostErrors(
 
 	for (const FString& Line : Lines)
 	{
-		LOG("::error::%s", *Line);
+		LOG("##teamcity[message text='%s' status='ERROR']", *Line.Replace(TEXT("'"), TEXT("|'")));
 	}
 
 	Lines.SetNum(FMath::Min(Lines.Num(), 10));
@@ -658,39 +663,6 @@ FString GetServerToken()
 	}
 
 	return ServerToken;
-}
-
-bool TryGetPullRequestInfo(
-	FString& OutName,
-	FString& OutUrl)
-{
-	const TOptional<FString> GitHubRef = TryGetCommandLineValue("github_ref");
-	if (!GitHubRef)
-	{
-		return false;
-	}
-
-	FString PullRequestId = *GitHubRef;
-	if (!PullRequestId.RemoveFromStart("refs/pull/") ||
-		!PullRequestId.RemoveFromEnd("/merge"))
-	{
-		return false;
-	}
-
-	const int32 Index = GForgeGitHubUrl.Find("/actions/runs/");
-	check(Index != -1);
-
-	const FString RepoUrl = GForgeGitHubUrl.Left(Index);
-	const FString ApiUrl = RepoUrl.Replace(TEXT("https://github.com/"), TEXT("https://api.github.com/"));
-
-#if 0 // TODO Missing token
-	Http_Get(ApiUrl / "pulls" + GitHubRef)
-	.Header("Content-type", "application/json")
-#endif
-
-	OutName = "Pull Request";
-	OutUrl = RepoUrl / "pull" / PullRequestId;
-	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1109,15 +1081,7 @@ void PostFatalSlackMessage(
 	const TArray<FSlackAttachment>& Attachments)
 {
 	FString NewMessage = "*" + GForgeCmd + " failed*\n";
-
-	FString PullRequestName;
-	FString PullRequestUrl;
-	if (TryGetPullRequestInfo(PullRequestName, PullRequestUrl))
-	{
-		NewMessage += "PR: " + PullRequestName + " " + PullRequestUrl + "\n";
-	}
-
-	NewMessage += GForgeGitHubUrl + "\n";
+	NewMessage += FPlatformMisc::GetEnvironmentVariable(TEXT("BUILD_URL")) + "\n";
 	NewMessage += Message;
 
 	PostSlackMessage(NewMessage, Attachments);
@@ -1726,7 +1690,7 @@ void RClone_Copy(
 
 	const int64 FileSize = IFileManager::Get().FileSize(*Path);
 
-	LOG_SUMMARY("rclone copy took %fs (%s/s)",
+	LOG("rclone copy took %fs (%s/s)",
 		EndTime - StartTime,
 		*BytesToString(FileSize / (EndTime - StartTime)));
 }
@@ -1764,7 +1728,7 @@ TArray64<uint8> Compress_Oodle(const TConstArrayView64<uint8> Data)
 
 	const double EndTime = FPlatformTime::Seconds();
 
-	LOG_SUMMARY("Compression took %fs (%s/s), %s -> %s",
+	LOG("Compression took %fs (%s/s), %s -> %s",
 		EndTime - StartTime,
 		*BytesToString(Data.Num() / (EndTime - StartTime)),
 		*BytesToString(Data.Num()),
@@ -1788,7 +1752,7 @@ TArray64<uint8> Decompress_Oodle(const TArray64<uint8>& CompressedData)
 
 	const double EndTime = FPlatformTime::Seconds();
 
-	LOG_SUMMARY("Decompression took %fs (%s/s), %s -> %s",
+	LOG("Decompression took %fs (%s/s), %s -> %s",
 		EndTime - StartTime,
 		*BytesToString(Data.Num() / (EndTime - StartTime)),
 		*BytesToString(CompressedData.Num()),
@@ -1886,14 +1850,14 @@ int32 UForgeCommandlet::Main(const FString& Params)
 
 			if (Verbosity == ELogVerbosity::Warning)
 			{
-				LOG("::warning:: %s: %s", *Category.ToString(), Data);
+				LOG("##teamcity[message text='%s %s' status='WARNING']", *Category.ToString(), *FString(Data).Replace(TEXT("'"), TEXT("|'")));
 
 				FScopeLock Lock(&CriticalSection);
 				Warnings.Add(FString::Printf(TEXT("%s: %s"), *Category.ToString(), Data));
 			}
 			else if (Verbosity == ELogVerbosity::Error)
 			{
-				LOG("::error:: %s: %s", *Category.ToString(), Data);
+				LOG("##teamcity[message text='%s %s' status='ERROR']", *Category.ToString(), *FString(Data).Replace(TEXT("'"), TEXT("|'")));
 
 				FScopeLock Lock(&CriticalSection);
 				Errors.Add(FString::Printf(TEXT("%s: %s"), *Category.ToString(), Data));
@@ -1910,13 +1874,6 @@ int32 UForgeCommandlet::Main(const FString& Params)
 	{
 		GLog->RemoveOutputDevice(OutputDevice);
 	};
-
-	GForgeGitHubUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("GITHUB_URL"));
-
-	if (GForgeGitHubUrl.IsEmpty())
-	{
-		LOG_FATAL("Missing GITHUB_URL");
-	}
 
 	GForgeSlackBuildOpsUrl = FPlatformMisc::GetEnvironmentVariable(TEXT("SLACK_BUILD_OPS_URL"));
 
@@ -1963,7 +1920,7 @@ int32 UForgeCommandlet::Main(const FString& Params)
 			for (const FString& Warning : OutputDevice->Warnings)
 			{
 				Message += Warning + "\n";
-				LOG("::warning::\t%s", *Warning);
+				LOG("%s", *Warning);
 			}
 
 			Message += "```\n";
@@ -1979,7 +1936,7 @@ int32 UForgeCommandlet::Main(const FString& Params)
 			for (const FString& Error : OutputDevice->Errors)
 			{
 				Message += Error + "\n";
-				LOG("::error::\t%s", *Error);
+				LOG("%s", *Error);
 			}
 
 			Message += "```\n";
@@ -1991,7 +1948,7 @@ int32 UForgeCommandlet::Main(const FString& Params)
 	return 0;
 }
 
-int32 GForgeLogDepth = 0;
+int32 GForgeBlockIndex = 0;
 
 void Internal_Log(FString Line)
 {
@@ -2000,49 +1957,10 @@ void Internal_Log(FString Line)
 		UE_LOG(LogForge, Display, TEXT("%s"), *Line);
 	}
 
-	const double Time = FPlatformTime::Seconds() - GForgeStartTime;
-	const int32 Minutes = FMath::FloorToInt(Time / 60);
-	const int32 Seconds = FMath::FloorToInt(Time - 60 * Minutes);
+	Line.ReplaceInline(TEXT("\n"), TEXT("|n"));
+	Line.ReplaceInline(TEXT("\r"), TEXT("|r"));
 
-	FString Prefix = FString::Printf(
-			TEXT("[%3dm%2ds] "),
-			Minutes,
-			Seconds);
-
-	if (Line.RemoveFromStart("::group::"))
-	{
-		Prefix = "::group::";
-	}
-	if (Line.RemoveFromStart("::endgroup::"))
-	{
-		Prefix = "::endgroup::";
-	}
-	if (Line.RemoveFromStart("::warning::"))
-	{
-		Prefix = "::warning::";
-	}
-	if (Line.RemoveFromStart("::error::"))
-	{
-		Prefix = "::error::";
-	}
-
-	TArray<FString> SubLines;
-	Line.ParseIntoArrayLines(SubLines, false);
-
-	for (int32 Index = 0; Index < GForgeLogDepth; Index++)
-	{
-		Prefix += "\t";
-	}
-
-	FString StringToWrite;
-	for (FString& SubLine : SubLines)
-	{
-		StringToWrite += Prefix;
-		StringToWrite += SubLine;
-		StringToWrite += "\n";
-	}
-
-	const FTCHARToUTF8 UnicodeString(*StringToWrite, StringToWrite.Len());
+	const FTCHARToUTF8 UnicodeString(*Line, Line.Len());
 
 	FScopeLock Lock(&GForgeCriticalSection);
 	if (!GForgeLogHandle)
@@ -2067,28 +1985,4 @@ void Internal_LogFatal(const FString& Line)
 	}
 
 	UE_LOG(LogForge, Fatal, TEXT("%s"), *Line);
-}
-
-void Internal_LogSummary(const FString& Line)
-{
-	LOG("Summary: %s", *Line);
-
-	const FString Path = FPlatformMisc::GetEnvironmentVariable(TEXT("GITHUB_STEP_SUMMARY"));
-	if (Path.IsEmpty())
-	{
-		return;
-	}
-	check(FileExists(Path));
-
-	const FString String = Line + "\n";
-	const FTCHARToUTF8 UnicodeString(*String, String.Len());
-
-	IFileHandle* Handle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*Path, true, true);
-	check(Handle);
-
-	Handle->Write(
-		reinterpret_cast<const uint8*>(UnicodeString.Get()),
-		UnicodeString.Length());
-
-	delete Handle;
 }

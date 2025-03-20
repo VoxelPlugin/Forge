@@ -29,7 +29,7 @@ struct FForgeLambdaCaller
 #define FFileHelper ERROR
 #define IFileManager ERROR
 
-extern FORGE_API int32 GForgeLogDepth;
+extern FORGE_API int32 GForgeBlockIndex;
 
 FORGE_API void Internal_Log(FString Line);
 FORGE_API void Internal_LogFatal(const FString& Line);
@@ -37,15 +37,13 @@ FORGE_API void Internal_LogSummary(const FString& Line);
 
 #define LOG(Text, ...) Internal_Log(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 #define LOG_FATAL(Text, ...) Internal_LogFatal(FString::Printf(TEXT(Text), ##__VA_ARGS__))
-#define LOG_SUMMARY(Text, ...) Internal_LogSummary(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 
 #define LOG_SCOPE(Text, ...) \
-	LOG("::group::" Text, ##__VA_ARGS__); \
-	GForgeLogDepth++; \
+	const int32 BlockIndex_ ## __LINE__ = GForgeBlockIndex++; \
+	LOG("##teamcity[blockOpened name='block_%d' description='" Text "']" Text, BlockIndex_ ## __LINE__, ##__VA_ARGS__); \
 	ON_SCOPE_EXIT \
 	{ \
-		GForgeLogDepth--; \
-		LOG("::endgroup::"); \
+		LOG("##teamcity[blockClosed name='block_%d']", BlockIndex_ ## __LINE__); \
 	}
 
 #define check(...) \
@@ -131,10 +129,6 @@ FORGE_API TArray<FString> GetCommandLineArray(const FString& Name);
 FORGE_API TOptional<FString> TryGetCommandLineValue(const FString& Name);
 
 FORGE_API FString GetServerToken();
-
-FORGE_API bool TryGetPullRequestInfo(
-	FString& OutName,
-	FString& OutUrl);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
