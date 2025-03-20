@@ -55,7 +55,7 @@ if not os.path.exists(engine_path):
 print("Engine Path: " + engine_path, flush=True)
 
 if "-DoNotKillZombies" not in forge_args:
-    print("Killing zombie processes", flush=True)
+    print("##teamcity[blockOpened name='Killing zombie processes']", flush=True)
 
     if os.name == "posix":
         subprocess.run('killall UnrealEditor', shell=True)
@@ -66,7 +66,9 @@ if "-DoNotKillZombies" not in forge_args:
         subprocess.run('wmic process where "name=\'UnrealEditor-Cmd.exe\'" delete')
         subprocess.run('wmic process where "name=\'dotnet.exe\'" delete')
 
-print("##teamcity[blockOpened name='Building project' description='Building project']", flush=True)
+    print("##teamcity[blockClosed name='Killing zombie processes']", flush=True)
+
+print("##teamcity[blockOpened name='Building project']", flush=True)
 
 if is_unix:
     result = subprocess.run(f'bash "{engine_path}/Engine/Build/BatchFiles/RunUAT.sh" BuildEditor -project="{project}" -notools', shell=True)
