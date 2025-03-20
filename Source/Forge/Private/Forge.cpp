@@ -325,8 +325,6 @@ bool ExecImpl(
 	check(!GForgeWorkingDirectory.IsEmpty());
 	check(FPaths::DirectoryExists(GForgeWorkingDirectory));
 
-	LOG_SCOPE("%s", *CommandLine);
-
 	void* PipeRead = nullptr;
 	void* PipeWrite = nullptr;
 	check(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
@@ -1037,7 +1035,7 @@ void PostSlackMessage(
 		GForgeIsSendingSlackMessage = false;
 	};
 
-	LOG_SCOPE("PostSlackMessage: %s", *Message);
+	LOG_SCOPE("PostSlackMessage");
 
 	const TSharedRef<FJsonObject> Json = MakeShared<FJsonObject>();
 	Json->SetStringField("text", Message);
@@ -1313,7 +1311,8 @@ void ZipDirectory(
 	const FString& Output,
 	const int32 Compression)
 {
-	LOG_SCOPE("Zipping %s into %s", *Directory, *Output);
+	LOG_SCOPE("ZipDirectory");
+	LOG("Zipping %s into %s", *Directory, *Output);
 
 	if (!DirectoryExists(Directory))
 	{
@@ -1353,7 +1352,8 @@ void Unzip(
 	const FString& ZipPath,
 	const FString& OutputDirectory)
 {
-	LOG_SCOPE("Unzipping %s", *ZipPath);
+	LOG_SCOPE("Unzip");
+	LOG("Unzipping %s", *ZipPath);
 
 	if (!FileExists(ZipPath))
 	{
@@ -1474,7 +1474,8 @@ void ExtractZip(
 	const TConstArrayView64<uint8> Data,
 	const FString& Path)
 {
-	LOG_SCOPE("ExtractZip %s", *Path);
+	LOG_SCOPE("ExtractZip");
+	LOG("ExtractZip %s", *Path);
 
 	mz_zip_archive Archive;
 	FMemory::Memzero(Archive);
@@ -1580,7 +1581,8 @@ TArray64<uint8> FZipWriter::Finalize()
 
 TArray64<uint8> ZipDirectory(const FString& Path)
 {
-	LOG_SCOPE("ZipDirectory %s", *Path);
+	LOG_SCOPE("ZipDirectory");
+	LOG("ZipDirectory %s", *Path);
 
 	const double StartTime = FPlatformTime::Seconds();
 
@@ -1681,7 +1683,8 @@ void RClone_Copy(
 
 bool RClone_FileExists(const FString& Path)
 {
-	LOG_SCOPE("RClone_FileExists %s", *Path);
+	LOG_SCOPE("RClone_FileExists");
+	LOG("RClone_FileExists %s", *Path);
 
 	FString Output;
 	if (!TryExec("rclone lsf " + Path, Output))
@@ -1931,8 +1934,6 @@ int32 UForgeCommandlet::Main(const FString& Params)
 
 	return 0;
 }
-
-int32 GForgeBlockIndex = 0;
 
 FString EscapeTeamCity(FString Text)
 {
