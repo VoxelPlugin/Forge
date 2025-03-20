@@ -404,7 +404,7 @@ bool ExecImpl(
 					continue;
 				}
 
-				LOG("%s", *Line);
+				LOG("\t%s", *Line);
 			}
 		}
 	};
