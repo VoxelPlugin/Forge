@@ -66,14 +66,14 @@ if "-DoNotKillZombies" not in forge_args:
         subprocess.run('wmic process where "name=\'UnrealEditor-Cmd.exe\'" delete')
         subprocess.run('wmic process where "name=\'dotnet.exe\'" delete')
 
-print("::group::Building project")
+print("##teamcity[blockOpened name='Building project' description='Building project']")
 
 if is_unix:
     result = subprocess.run(f'bash "{engine_path}/Engine/Build/BatchFiles/RunUAT.sh" BuildEditor -project="{project}" -notools', shell=True)
 else:
     result = subprocess.run(f'"{engine_path}/Engine/Build/BatchFiles/RunUAT.bat" BuildEditor -project="{project}" -notools')
 
-print("::endgroup::")
+print("##teamcity[blockClosed name='Building project']")
 
 if result.returncode != 0:
     print("::error::Failed to build project")
