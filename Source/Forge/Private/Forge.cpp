@@ -463,12 +463,12 @@ FString Exec_PostErrors(
 	const FString& CommandLine,
 	const TSet<int32>& ValidExitCodes)
 {
-	LOG("##teamcity[compilationStarted compiler='Unreal']");
+	LOG("##teamcity[compilationStarted compiler='Execute']");
 
 	FString Output;
 	const bool bSuccess = ExecImpl(CommandLine, true, Output, ValidExitCodes);
 
-	LOG("##teamcity[compilationFinished compiler='Unreal']");
+	LOG("##teamcity[compilationFinished compiler='Execute']");
 
 	if (bSuccess)
 	{
@@ -1958,7 +1958,10 @@ void Internal_Log(FString Line)
 		UE_LOG(LogForge, Display, TEXT("%s"), *Line);
 	}
 
-	Line = EscapeTeamCity(Line);
+	if (!Line.StartsWith("##teamcity"))
+	{
+		Line = "##teamcity[message text='" + EscapeTeamCity(Line) + "' status='NORMAL']";
+	}
 
 	const FTCHARToUTF8 UnicodeString(*Line, Line.Len());
 

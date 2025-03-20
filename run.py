@@ -76,7 +76,7 @@ else:
 print("##teamcity[blockClosed name='Building project']")
 
 if result.returncode != 0:
-    print("::error::Failed to build project")
+    print("Failed to build project")
     exit(1)
 
 print("Build successful")
