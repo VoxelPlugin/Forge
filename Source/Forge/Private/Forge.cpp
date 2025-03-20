@@ -1624,31 +1624,13 @@ TArray64<uint8> ZipDirectory(const FString& Path)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-void SetGitHubOutput(
-	const FString& Key,
+void SetTeamCityParameter(
+	const FString& Name,
 	const FString& Value)
 {
-	LOG("SetGitHubOutput: %s=%s", *Key, *Value);
-	check(!Key.Contains("="));
-
-	const FString Path = FPlatformMisc::GetEnvironmentVariable(TEXT("GITHUB_OUTPUT"));
-	if (Path.IsEmpty())
-	{
-		return;
-	}
-	check(FileExists(Path));
-
-	const FString String = Key + "=" + Value + "\n";
-	const FTCHARToUTF8 UnicodeString(*String, String.Len());
-
-	IFileHandle* Handle = FPlatformFileManager::Get().GetPlatformFile().OpenWrite(*Path, true, true);
-	check(Handle);
-
-	Handle->Write(
-		reinterpret_cast<const uint8*>(UnicodeString.Get()),
-		UnicodeString.Length());
-
-	delete Handle;
+	LOG("##teamcity[setParameter name='%s' value='%s']",
+		*EscapeTeamCity(Name),
+		*EscapeTeamCity(Value));
 }
 
 void RClone_Copy(
