@@ -325,6 +325,8 @@ bool ExecImpl(
 	check(!GForgeWorkingDirectory.IsEmpty());
 	check(FPaths::DirectoryExists(GForgeWorkingDirectory));
 
+	LOG("%s", *CommandLine);
+
 	void* PipeRead = nullptr;
 	void* PipeWrite = nullptr;
 	check(FPlatformProcess::CreatePipe(PipeRead, PipeWrite));
