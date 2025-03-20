@@ -11,18 +11,18 @@ import subprocess
 sys.stdout.reconfigure(encoding='utf-8')
 
 if len(sys.argv) < 3:
-    print('Invalid usage: should be run.py "Path/To/Project.uproject" MyCommand -Cmd1 -Cmd2')
+    print('Invalid usage: should be run.py "Path/To/Project.uproject" MyCommand -Cmd1 -Cmd2', flush=True)
     exit(1)
 
 project = sys.argv[1]
 forge_cmd = sys.argv[2]
 forge_args = "" if len(sys.argv) == 3 else " ".join(sys.argv[3:])
 
-print("Project: " + project)
-print("Forge Cmd: " + forge_cmd)
-print("Forge Args: " + forge_args)
-print("OS: " + os.name)
-print("Platform: " + platform.processor())
+print("Project: " + project, flush=True)
+print("Forge Cmd: " + forge_cmd, flush=True)
+print("Forge Args: " + forge_args, flush=True)
+print("OS: " + os.name, flush=True)
+print("Platform: " + platform.processor(), flush=True)
 
 is_unix = os.name == "posix"
 
@@ -49,13 +49,13 @@ for engine_base_path in engine_base_paths:
         break
 
 if not os.path.exists(engine_path):
-    print("Failed to find a valid engine install. Checked\n" + "\n".join(engine_path_candidates))
+    print("Failed to find a valid engine install. Checked\n" + "\n".join(engine_path_candidates), flush=True)
     exit(1)
 
-print("Engine Path: " + engine_path)
+print("Engine Path: " + engine_path, flush=True)
 
 if "-DoNotKillZombies" not in forge_args:
-    print("Killing zombie processes")
+    print("Killing zombie processes", flush=True)
 
     if os.name == "posix":
         subprocess.run('killall UnrealEditor', shell=True)
@@ -66,20 +66,20 @@ if "-DoNotKillZombies" not in forge_args:
         subprocess.run('wmic process where "name=\'UnrealEditor-Cmd.exe\'" delete')
         subprocess.run('wmic process where "name=\'dotnet.exe\'" delete')
 
-print("##teamcity[blockOpened name='Building project' description='Building project']")
+print("##teamcity[blockOpened name='Building project' description='Building project']", flush=True)
 
 if is_unix:
     result = subprocess.run(f'bash "{engine_path}/Engine/Build/BatchFiles/RunUAT.sh" BuildEditor -project="{project}" -notools', shell=True)
 else:
     result = subprocess.run(f'"{engine_path}/Engine/Build/BatchFiles/RunUAT.bat" BuildEditor -project="{project}" -notools')
 
-print("##teamcity[blockClosed name='Building project']")
+print("##teamcity[blockClosed name='Building project']", flush=True)
 
 if result.returncode != 0:
-    print("Failed to build project")
+    print("Failed to build project", flush=True)
     exit(1)
 
-print("Build successful")
+print("Build successful", flush=True)
 
 saved_directory = os.path.dirname(project) + "/Saved"
 
@@ -94,7 +94,7 @@ with open(log_path, 'w') as f:
 log_file = open(log_path, 'r', encoding='utf-8', errors='backslashreplace')
 log_file.read()
 
-print("Starting Unreal")
+print("Starting Unreal", flush=True)
 
 if is_unix:
     unreal_editor_path = f'{engine_path}/Engine/Binaries/Mac/UnrealEditor.app/Contents/MacOS/UnrealEditor'
@@ -119,7 +119,7 @@ for line in iter(process.stdout.readline, ""):
     log = log.removesuffix("\n")
 
     if len(log) > 0:
-        print(log)
+        print(log, flush=True)
 
 process.stdout.close()
 
@@ -129,9 +129,9 @@ log = log_file.read()
 log = log.removesuffix("\n")
 
 if len(log) > 0:
-    print(log)
+    print(log, flush=True)
 
-print(f"Exit code: {exit_code}")
+print(f"Exit code: {exit_code}", flush=True)
 
 # print("::group::Unreal log")
 #
@@ -141,7 +141,7 @@ print(f"Exit code: {exit_code}")
 # print("::endgroup::")
 
 if exit_code != 0:
-    print("::error::Command failed")
+    print("Command failed", flush=True)
     exit(1)
 
-print("Command successful")
+print("Command successful", flush=True)
