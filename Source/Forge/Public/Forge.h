@@ -113,6 +113,7 @@ FORGE_API bool TryExec(
 ///////////////////////////////////////////////////////////////////////////////
 
 FORGE_API FString Git_GetRevision();
+FORGE_API FString Git_GetShortRevision();
 FORGE_API int32 Git_GetChangelist();
 FORGE_API void Git_Fetch();
 

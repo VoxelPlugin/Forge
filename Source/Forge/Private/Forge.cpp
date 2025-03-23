@@ -546,6 +546,11 @@ bool TryExec(
 
 FString Git_GetRevision()
 {
+	return Exec("git rev-parse HEAD");
+}
+
+FString Git_GetShortRevision()
+{
 	const FString Revision = Exec("git rev-parse HEAD");
 	const FString ShortRevision = Exec("git rev-parse --short HEAD");
 	check(Revision.StartsWith(ShortRevision));
