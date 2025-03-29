@@ -1889,14 +1889,12 @@ int32 UForgeCommandlet::Main(const FString& Params)
 		LOG_FATAL("Missing SLACK_BUILD_OPS_URL");
 	}
 
-	if (!FParse::Value(FCommandLine::Get(), TEXT("-ForgeCmd="), GForgeCmd) ||
-		GForgeCmd.IsEmpty())
+	if (!FParse::Value(FCommandLine::Get(), TEXT("-ForgeCmd="), GForgeCmd))
 	{
 		LOG_FATAL("Missing -ForgeCmd=");
 	}
 
-	if (!FParse::Value(FCommandLine::Get(), TEXT("-ForgeArgs="), GForgeArgs) ||
-		GForgeArgs.IsEmpty())
+	if (!FParse::Value(FCommandLine::Get(), TEXT("-ForgeArgs="), GForgeArgs))
 	{
 		LOG_FATAL("Missing -ForgeArgs=");
 	}
