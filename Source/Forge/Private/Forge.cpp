@@ -1149,6 +1149,25 @@ void CheckIsValidPath(const FString& Path)
 	}
 }
 
+void CopyDirectory(
+	const FString& Source,
+	const FString& Dest)
+{
+	CheckIsValidPath(Source);
+	CheckIsValidPath(Dest);
+
+	LOG("CopyDirectory %s -> %s", *Source, *Dest);
+
+	check(FPaths::DirectoryExists(Source));
+
+	IPlatformFile& PlatformFile = FPlatformFileManager::Get().GetPlatformFile();
+
+	if (!PlatformFile.CopyDirectoryTree(*Dest, *Source, true))
+	{
+		LOG_FATAL("Failed to copy directory %s to %s", *Source, *Dest);
+	}
+}
+
 void CopyDirectory_SkipGit(
 	const FString& Source,
 	const FString& Dest)
@@ -1264,6 +1283,18 @@ void DeleteFile(const FString& Path)
 	}
 }
 
+int64 FileSize(const FString& Path)
+{
+	CheckIsValidPath(Path);
+
+	if (!FileExists(Path))
+	{
+		LOG_FATAL("FileSize: %s does not exist", *Path);
+	}
+
+	return IFileManager::Get().FileSize(*Path);
+}
+
 void MoveFile(
 	const FString& OldPath,
 	const FString& NewPath)
@@ -1333,7 +1364,7 @@ TArray<FString> ListChildrenRecursive_FilePaths(const FString& Path)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-FString GetSevenZipPath()
+FString Get7zPath()
 {
 	const FString BasePath = IPluginManager::Get().FindPlugin("Forge")->GetBaseDir() / "Source" / "ThirdParty";
 	check(DirectoryExists(BasePath));
@@ -1391,7 +1422,7 @@ void ZipDirectory(
 		}
 	};
 
-	FString Command = GetSevenZipPath() + " a -t" + Format + " \"" + Output + "\" \"" + Directory + "\"";
+	FString Command = Get7zPath() + " a -t" + Format + " \"" + Output + "\" \"" + Directory + "\"";
 	if (Compression != -1)
 	{
 		check(0 <= Compression && Compression <= 9);
@@ -1416,7 +1447,7 @@ void Unzip(
 		LOG_FATAL("Unzip: output directory %s does not exist", *OutputDirectory);
 	}
 
-	Exec(GetSevenZipPath() + " x -y " + "\"" + ZipPath + "\" -o\"" + OutputDirectory + "\"");
+	Exec(Get7zPath() + " x -y " + "\"" + ZipPath + "\" -o\"" + OutputDirectory + "\"");
 }
 
 ///////////////////////////////////////////////////////////////////////////////

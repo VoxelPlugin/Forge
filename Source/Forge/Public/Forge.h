@@ -274,6 +274,10 @@ FORGE_API void PostFatalSlackMessage(
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+FORGE_API void CopyDirectory(
+	const FString& Source,
+	const FString& Dest);
+
 FORGE_API void CopyDirectory_SkipGit(
 	const FString& Source,
 	const FString& Dest);
@@ -284,6 +288,7 @@ FORGE_API void MakeDirectory(const FString& Path);
 
 FORGE_API bool FileExists(const FString& Path);
 FORGE_API void DeleteFile(const FString& Path);
+FORGE_API int64 FileSize(const FString& Path);
 
 FORGE_API void MoveFile(
 	const FString& OldPath,
@@ -296,6 +301,8 @@ FORGE_API TArray<FString> ListChildrenRecursive_FilePaths(const FString& Path);
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+FORGE_API FString Get7zPath();
 
 enum class EZipType
 {
