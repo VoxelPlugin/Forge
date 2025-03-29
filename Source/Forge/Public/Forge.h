@@ -29,23 +29,19 @@ struct FForgeLambdaCaller
 #define FFileHelper ERROR
 #define IFileManager ERROR
 
-extern FORGE_API int32 GForgeLogDepth;
-
+FORGE_API FString EscapeTeamCity(FString Text);
 FORGE_API void Internal_Log(FString Line);
 FORGE_API void Internal_LogFatal(const FString& Line);
 FORGE_API void Internal_LogSummary(const FString& Line);
 
 #define LOG(Text, ...) Internal_Log(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 #define LOG_FATAL(Text, ...) Internal_LogFatal(FString::Printf(TEXT(Text), ##__VA_ARGS__))
-#define LOG_SUMMARY(Text, ...) Internal_LogSummary(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 
-#define LOG_SCOPE(Text, ...) \
-	LOG("::group::" Text, ##__VA_ARGS__); \
-	GForgeLogDepth++; \
+#define LOG_SCOPE(Name) \
+	LOG("##teamcity[blockOpened name='" Name "']"); \
 	ON_SCOPE_EXIT \
 	{ \
-		GForgeLogDepth--; \
-		LOG("::endgroup::"); \
+		LOG("##teamcity[blockClosed name='" Name "']"); \
 	}
 
 #define check(...) \
@@ -117,6 +113,7 @@ FORGE_API bool TryExec(
 ///////////////////////////////////////////////////////////////////////////////
 
 FORGE_API FString Git_GetRevision();
+FORGE_API FString Git_GetShortRevision();
 FORGE_API int32 Git_GetChangelist();
 FORGE_API void Git_Fetch();
 
@@ -131,10 +128,6 @@ FORGE_API TArray<FString> GetCommandLineArray(const FString& Name);
 FORGE_API TOptional<FString> TryGetCommandLineValue(const FString& Name);
 
 FORGE_API FString GetServerToken();
-
-FORGE_API bool TryGetPullRequestInfo(
-	FString& OutName,
-	FString& OutUrl);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -375,8 +368,8 @@ FORGE_API void ExtractZip(
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-FORGE_API void SetGitHubOutput(
-	const FString& Key,
+FORGE_API void SetTeamCityParameter(
+	const FString& Name,
 	const FString& Value);
 
 FORGE_API void RClone_Copy(
