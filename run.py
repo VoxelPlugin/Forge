@@ -103,10 +103,9 @@ if is_unix:
 else:
     unreal_editor_path = f'{engine_path}/Engine/Binaries/Win64/UnrealEditor.exe'
 
-# corelimit: more cores just uses more memory & usually does not help with perf
 process = subprocess.Popen(
     f'"{unreal_editor_path}" "{project}" ' +
-    f'-unattended -buildmachine -LiveCoding=0 -corelimit=16 -run=Forge -ForgeCmd={forge_cmd} -ForgeArgs="-DummyArgument {forge_args}"',
+    f'-unattended -buildmachine -LiveCoding=0 -run=Forge -ForgeCmd={forge_cmd} -ForgeArgs="-DummyArgument {forge_args}"',
     stdout=subprocess.PIPE,
     universal_newlines=True,
     shell=is_unix)
