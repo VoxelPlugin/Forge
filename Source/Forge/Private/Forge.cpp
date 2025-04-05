@@ -1248,6 +1248,29 @@ int64 FileSize(const FString& Path)
 	return IFileManager::Get().FileSize(*Path);
 }
 
+void CopyFile(
+	const FString& OldPath,
+	const FString& NewPath)
+{
+	CheckIsValidPath(OldPath);
+	CheckIsValidPath(NewPath);
+
+	LOG("CopyFile %s -> %s", *OldPath, *NewPath);
+
+	if (!FileExists(OldPath))
+	{
+		LOG_FATAL("CopyFile: %s does not exist", *OldPath);
+	}
+
+	if (FileExists(NewPath) ||
+		DirectoryExists(NewPath))
+	{
+		LOG_FATAL("CopyFile: %s already exists", *NewPath);
+	}
+
+	check(IFileManager::Get().Copy(*NewPath, *OldPath));
+}
+
 void MoveFile(
 	const FString& OldPath,
 	const FString& NewPath)

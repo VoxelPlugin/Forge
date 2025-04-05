@@ -283,6 +283,10 @@ FORGE_API bool FileExists(const FString& Path);
 FORGE_API void DeleteFile(const FString& Path);
 FORGE_API int64 FileSize(const FString& Path);
 
+FORGE_API void CopyFile(
+	const FString& OldPath,
+	const FString& NewPath);
+
 FORGE_API void MoveFile(
 	const FString& OldPath,
 	const FString& NewPath);
