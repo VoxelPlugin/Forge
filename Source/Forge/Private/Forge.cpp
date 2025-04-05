@@ -1223,7 +1223,7 @@ int64 DirectorySize(const FString& Path)
 	int64 Result = 0;
 	for (const FString& ChildPath : ListChildrenRecursive_FilePaths(Path))
 	{
-		Result = FileSize(ChildPath);
+		Result += FileSize(ChildPath);
 	}
 	return Result;
 }
