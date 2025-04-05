@@ -1213,6 +1213,21 @@ void MakeDirectory(const FString& Path)
 	}
 }
 
+int64 DirectorySize(const FString& Path)
+{
+	if (!DirectoryExists(Path))
+	{
+		LOG_FATAL("DirectorySize %s: Path does not exist", *Path);
+	}
+
+	int64 Result = 0;
+	for (const FString& ChildPath : ListChildrenRecursive_FilePaths(Path))
+	{
+		Result = FileSize(ChildPath);
+	}
+	return Result;
+}
+
 bool FileExists(const FString& Path)
 {
 	CheckIsValidPath(Path);
@@ -1712,16 +1727,17 @@ void RClone_Copy(
 
 		return Source;
 	};
-	if (!FileExists(Path))
+	if (!FileExists(Path) &&
+		!DirectoryExists(Path))
 	{
 		LOG_FATAL("Invalid rclone: %s does not exist", *Path);
 	}
 
-	const int64 FileSize = IFileManager::Get().FileSize(*Path);
+	const int64 Size = FileExists(Path) ? FileSize(Path) : DirectorySize(Path);
 
 	LOG("rclone copy took %fs (%s/s)",
 		EndTime - StartTime,
-		*BytesToString(FileSize / (EndTime - StartTime)));
+		*BytesToString(Size / (EndTime - StartTime)));
 }
 
 bool RClone_FileExists(const FString& Path)

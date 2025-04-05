@@ -278,6 +278,7 @@ FORGE_API void CopyDirectory_SkipGit(
 FORGE_API bool DirectoryExists(const FString& Path);
 FORGE_API void DeleteDirectory(const FString& Path);
 FORGE_API void MakeDirectory(const FString& Path);
+FORGE_API int64 DirectorySize(const FString& Path);
 
 FORGE_API bool FileExists(const FString& Path);
 FORGE_API void DeleteFile(const FString& Path);
