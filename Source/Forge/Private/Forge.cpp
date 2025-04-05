@@ -1976,6 +1976,22 @@ void Internal_Log(FString Line)
 		UE_LOG(LogForge, Display, TEXT("%s"), *Line);
 	}
 
+	const FString Open = "TEAMCITY_OPEN[";
+	if (Line.Contains(Open))
+	{
+		Line = Line.RightChop(Line.Find(Open) + Open.Len());
+		Line = Line.Left(Line.Find(TEXT("]")));
+		Line = "##teamcity[blockOpened name='" + Line + "']";
+	}
+
+	const FString Close = "TEAMCITY_CLOSE[";
+	if (Line.Contains(Close))
+	{
+		Line = Line.RightChop(Line.Find(Close) + Close.Len());
+		Line = Line.Left(Line.Find(TEXT("]")));
+		Line = "##teamcity[blockClosed name='" + Line + "']";
+	}
+
 	if (!Line.StartsWith("##teamcity"))
 	{
 		Line = "##teamcity[message text='" + EscapeTeamCity(Line) + "' status='NORMAL']";
