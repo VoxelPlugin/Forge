@@ -2010,6 +2010,11 @@ FString EscapeTeamCity(FString Text)
 
 void Internal_Log(FString Line)
 {
+	if (Line.TrimStart().StartsWith("##teamcity"))
+	{
+		Line = Line.TrimStart();
+	}
+
 	if (!Line.Contains("LogForge"))
 	{
 		UE_LOG(LogForge, Display, TEXT("%s"), *Line);
