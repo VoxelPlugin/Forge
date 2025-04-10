@@ -37,11 +37,11 @@ FORGE_API void Internal_LogSummary(const FString& Line);
 #define LOG(Text, ...) Internal_Log(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 #define LOG_FATAL(Text, ...) Internal_LogFatal(FString::Printf(TEXT(Text), ##__VA_ARGS__))
 
-#define LOG_SCOPE(Name) \
-	LOG("##teamcity[blockOpened name='" Name "']"); \
+#define LOG_SCOPE(Name, ...) \
+	LOG("##teamcity[blockOpened name='%s']", *FString::Printf(TEXT(Name), ##__VA_ARGS__)); \
 	ON_SCOPE_EXIT \
 	{ \
-		LOG("##teamcity[blockClosed name='" Name "']"); \
+		LOG("##teamcity[blockClosed name='%s']", *FString::Printf(TEXT(Name), ##__VA_ARGS__)); \
 	}
 
 #define check(...) \
