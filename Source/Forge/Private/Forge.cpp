@@ -1655,7 +1655,9 @@ TArray64<uint8> FZipWriter::Finalize()
 	return Data;
 }
 
-TArray64<uint8> ZipDirectory(const FString& Path)
+TArray64<uint8> ZipDirectory(
+	const FString& Path,
+	const TFunction<bool(const FString& Path)> ShouldZip)
 {
 	LOG_SCOPE("ZipDirectory");
 	LOG("ZipDirectory %s", *Path);
@@ -1667,7 +1669,16 @@ TArray64<uint8> ZipDirectory(const FString& Path)
 		LOG_FATAL("ZipDirectory: %s does not exist", *Path);
 	}
 
-	const TArray<FString> Files = ListChildrenRecursive_FilePaths(Path);
+	TArray<FString> Files = ListChildrenRecursive_FilePaths(Path);
+
+	if (ShouldZip)
+	{
+		Files.RemoveAll([&](const FString& FilePath)
+		{
+			return !ShouldZip(FPaths::ConvertRelativePathToFull(FilePath));
+		});
+	}
+
 	check(Files.Num() > 0);
 
 	FZipWriter ZipWriter;

@@ -363,7 +363,9 @@ private:
 	mz_zip_archive Archive;
 };
 
-FORGE_API TArray64<uint8> ZipDirectory(const FString& Path);
+FORGE_API TArray64<uint8> ZipDirectory(
+	const FString& Path,
+	TFunction<bool(const FString& Path)> ShouldZip = nullptr);
 
 FORGE_API void ExtractZip(
 	TConstArrayView64<uint8> Data,
