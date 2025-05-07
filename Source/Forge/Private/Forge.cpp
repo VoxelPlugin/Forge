@@ -487,6 +487,7 @@ FString Exec_PostErrors(
 			Line.Contains("Failed to create pipeline state with combined hash") ||
 			Line.Contains("Failed to create compute PSO with combined hash") ||
 			Line.Contains("Failed to create compute pipeline with hash") ||
+			Line.Contains("no platform load command found") ||
 			Line.Contains("LogRHI: Error: Shader:"))
 		{
 			return true;
