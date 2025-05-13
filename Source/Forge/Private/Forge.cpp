@@ -697,9 +697,13 @@ void SetupLinuxToolchainFor(const FUnrealVersion& UnrealVersion)
 	{
 		Path = "C:/UnrealToolchains/v23_clang-18.1.0-rockylinux8/";
 	}
+	else if (UnrealVersion.ToString() == "5.6")
+	{
+		Path = "C:/UnrealToolchains/v23_clang-18.1.0-rockylinux8/";
+	}
 	else
 	{
-		LOG_FATAL("Unsupported version: %s, need to update LINUX_MULTIARCH_ROOT", *UnrealVersion.ToString());
+		LOG_FATAL("Unsupported version: %s, need to update SetupLinuxToolchainFor", *UnrealVersion.ToString());
 	}
 
 	if (!DirectoryExists(Path))
