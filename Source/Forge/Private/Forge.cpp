@@ -699,7 +699,7 @@ void SetupLinuxToolchainFor(const FUnrealVersion& UnrealVersion)
 	}
 	else if (UnrealVersion.ToString() == "5.6")
 	{
-		Path = "C:/UnrealToolchains/v23_clang-18.1.0-rockylinux8/";
+		Path = "C:/UnrealToolchains/v25_clang-18.1.0-rockylinux8/";
 	}
 	else
 	{
