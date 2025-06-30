@@ -1506,7 +1506,7 @@ void SaveTextFile(
 {
 	LOG("SaveTextFile %s", *Path);
 
-	if (!FFileHelper::SaveStringToFile(Content, *Path))
+	if (!FFileHelper::SaveStringToFile(Content, *Path, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM))
 	{
 		LOG_FATAL("SaveTextFile %s: failed to save", *Path);
 	}
