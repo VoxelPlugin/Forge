@@ -995,6 +995,12 @@ FHttpPost::~FHttpPost()
 		Request->SetContentAsString(PrivateContent);
 	}
 
+	if (PrivateContent_Bytes.Num() > 0)
+	{
+		check(PrivateContent_Bytes.Num() < MAX_int32);
+		Request->SetContent(TArray<uint8>(MoveTemp(PrivateContent_Bytes)));
+	}
+
 	Request->ProcessRequest();
 
 	while (Request->GetStatus() == EHttpRequestStatus::Processing)
@@ -1021,6 +1027,11 @@ FHttpPost::~FHttpPost()
 	LOG("RESPONSE: %d\n%s",
 		Response->GetResponseCode(),
 		*Response->GetContentAsString());
+
+	if (PrivateOnComplete)
+	{
+		PrivateOnComplete(Response->GetContentAsString());
+	}
 }
 
 FHttpPost Http_Post(const FString& Url)

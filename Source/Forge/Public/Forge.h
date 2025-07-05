@@ -237,12 +237,24 @@ public:
 		PrivateContent = Value;
 		return *this;
 	}
+	FHttpPost& Content(TArray64<uint8>&& Value)
+	{
+		PrivateContent_Bytes = MoveTemp(Value);
+		return *this;
+	}
+	FHttpPost& OnComplete(TFunction<void(FString)> Value)
+	{
+		PrivateOnComplete = MoveTemp(Value);
+		return *this;
+	}
 
 private:
 	const FString Url;
 	TMap<FString, FString> Headers;
 	TMap<FString, FString> QueryParameters;
 	FString PrivateContent;
+	TArray64<uint8> PrivateContent_Bytes;
+	TFunction<void(FString)> PrivateOnComplete;
 };
 FORGE_API FHttpPost Http_Post(const FString& Url);
 
