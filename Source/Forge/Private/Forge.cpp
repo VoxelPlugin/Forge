@@ -1001,7 +1001,6 @@ FHttpPost::~FHttpPost()
 		Request->SetContent(TArray<uint8>(MoveTemp(PrivateContent_Bytes)));
 	}
 
-	Request->SetTimeout(240);
 	Request->ProcessRequest();
 
 	while (Request->GetStatus() == EHttpRequestStatus::Processing)
