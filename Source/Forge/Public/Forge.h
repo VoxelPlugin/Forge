@@ -354,6 +354,7 @@ FORGE_API FString JsonToString(
 	bool bPrettyPrint);
 
 FORGE_API TSharedRef<FJsonObject> StringToJson(const FString& String);
+FORGE_API TArray<TSharedRef<FJsonObject>> StringToJsonArray(const FString& String);
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

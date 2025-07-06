@@ -1558,6 +1558,21 @@ TSharedRef<FJsonObject> StringToJson(const FString& String)
 	return JsonObject.ToSharedRef();
 }
 
+TArray<TSharedRef<FJsonObject>> StringToJsonArray(const FString& String)
+{
+	TArray<TSharedPtr<FJsonValue>> Array;
+	check(FJsonSerializer::Deserialize(
+		TJsonReaderFactory<>::Create(String),
+		Array));
+
+	TArray<TSharedRef<FJsonObject>> Result;
+	for (const auto& Value : Array)
+	{
+		Result.Add(Value->AsObject().ToSharedRef());
+	}
+	return Result;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
