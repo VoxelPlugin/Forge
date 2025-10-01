@@ -701,6 +701,10 @@ void SetupLinuxToolchainFor(const FUnrealVersion& UnrealVersion)
 	{
 		Path = "C:/UnrealToolchains/v25_clang-18.1.0-rockylinux8/";
 	}
+	else if (UnrealVersion.ToString() == "5.7")
+	{
+		Path = "C:/UnrealToolchains/v25_clang-18.1.0-rockylinux8/";
+	}
 	else
 	{
 		LOG_FATAL("Unsupported version: %s, need to update SetupLinuxToolchainFor", *UnrealVersion.ToString());
