@@ -41,7 +41,7 @@ else:
 engine_path = ""
 engine_path_candidates = []
 for engine_base_path in engine_base_paths:
-    engine_new_path = engine_base_path + "/UE_5.5"
+    engine_new_path = engine_base_path + "/UE_5.6"
     engine_path_candidates += [engine_new_path]
 
     if os.path.exists(engine_new_path):
